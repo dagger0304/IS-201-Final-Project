@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #333;
+        }
+        canvas {
+            border: 2px solid #fff;
+            background-color: #222;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            position: absolute;
+            top: 20px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Snake Game</h1>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const scale = 20;
+        const rows = canvas.height / scale;
+        const columns = canvas.width / scale;
+
+        let snake;
+        let apple;
+        let score;
+
+        (function setup() {
+            snake = new Snake();
+            apple = new Apple();
+            score = 0;
+            window.setInterval(game, 100);
+            window.addEventListener("keydown", e => {
+                if (e.key === "ArrowUp" && snake.direction !== "DOWN") {
+                    snake.direction = "UP";
+                } else if (e.key === "ArrowDown" && snake.direction !== "UP") {
+                    snake.direction = "DOWN";
+                } else if (e.key === "ArrowLeft" && snake.direction !== "RIGHT") {
+                    snake.direction = "LEFT";
+                } else if (e.key === "ArrowRight" && snake.direction !== "LEFT") {
+                    snake.direction = "RIGHT";
+                }
+            });
+        })();
+
+        function game() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            snake.move();
+            snake.draw();
+            apple.draw();
+            if (snake.eat(apple)) {
+                apple.randomize();
+                score++;
+            } else {
+                snake.removeTail();
+            }
+            if (snake.collide()) {
+                alert("Game Over! Score: " + score);
+                snake.reset();
+            }
+        }
+
+        function Snake() {
+            this.body = [{ x: 10, y: 10 }];
+            this.direction = "RIGHT";
+
+            this.move = function() {
+                const head = Object.assign({}, this.body[0]);
+
+                if (this.direction === "UP") head.y--;
+                if (this.direction === "DOWN") head.y++;
+                if (this.direction === "LEFT") head.x--;
+                if (this.direction === "RIGHT") head.x++;
+
+                this.body.unshift(head);
+            };
+
+            this.eat = function(apple) {
+                const head = this.body[0];
+                if (head.x === apple.x && head.y === apple.y) {
+                    return true;
+                }
+                return false;
+            };
+
+            this.removeTail = function() {
+                this.body.pop();
+            };
+
+            this.collide = function() {
+                const head = this.body[0];
+                if (head.x < 0 || head.x >= columns || head.y < 0 || head.y >= rows) {
+                    return true;
+                }
+                for (let i = 1; i < this.body.length; i++) {
+                    if (this.body[i].x === head.x && this.body[i].y === head.y) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+
+            this.draw = function() {
+                this.body.forEach((segment, index) => {
+                    ctx.fillStyle = index === 0 ? "green" : "white";
+                    ctx.fillRect(segment.x * scale, segment.y * scale, scale, scale);
+                });
+            };
+
+            this.reset = function() {
+                this.body = [{ x: 10, y: 10 }];
+                this.direction = "RIGHT";
+                score = 0;
+            };
+        }
+
+        function Apple() {
+            this.randomize = function() {
+                this.x = Math.floor(Math.random() * columns);
+                this.y = Math.floor(Math.random() * rows);
+            };
+
+            this.draw = function() {
+                ctx.fillStyle = "red";
+                ctx.fillRect(this.x * scale, this.y * scale, scale, scale);
+            };
+
+            this.randomize();
+        }
+    </script>
+</body>
+</html>
